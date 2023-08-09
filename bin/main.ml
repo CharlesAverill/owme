@@ -5,6 +5,8 @@
 
     When the render window is clicked, the spiral changes colors.
 
+    When a key is pressed, its ASCII representation is printed to the console
+
     The menu bar has four dropdowns: File, Edit, View, and Help.
     Clicking on them opens their dropdowns. Their dropdown items 
     execute arbitrary unit -> unit functions when clicked.
@@ -104,6 +106,12 @@ let onclick () =
     | 0x0000FF -> 0xFF0000
     | _ -> 0xFF0000
 
+let onkey c =
+  if int_of_char c = key_ESCAPE then raise Exit
+  else (
+    print_char c;
+    print_endline "")
+
 let _ =
   owme_render_window
     {
@@ -114,6 +122,7 @@ let _ =
       x11_font_string = None;
       render_loop;
       on_click = onclick;
+      on_key = onkey;
       background = Solid 0xFF00DC;
       text_spacing = None;
       framerate_cap = 60;

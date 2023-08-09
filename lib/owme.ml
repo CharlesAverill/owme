@@ -42,9 +42,11 @@ type window_config = {
   background : bgmode;
   render_loop : int -> int -> unit;
   on_click : unit -> unit;
+  on_key : char -> unit;
   menu_bar : menu_bar_config;
 }
 
+let key_ESCAPE = 27
 let last_wh = ref (0, 0)
 let mouse_is_down = ref false
 
@@ -258,7 +260,10 @@ let owme_render_window config =
         let sleep_time = frame_duration -. elapsed_time in
         if sleep_time > 0. then Core_thread.delay sleep_time;
 
-        if st.keypressed then raise Exit;
+        if st.keypressed then
+          while key_pressed () do
+            config.on_key (read_key ())
+          done;
         if st.button then (
           if not !mouse_is_down then (
             redraw_window ();

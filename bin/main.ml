@@ -115,22 +115,41 @@ let onkey c =
 let _ =
   owme_render_window
     {
+      (* Title of generated window *)
       window_title = "OWME Hello World";
+      (* Width of render window *)
       window_width = 1280;
+      (* Height of render window (does not include menu bar height - real window resolution will be 720 + menu_bar_height)*)
       window_height = 720;
+      (* If false, window will snap back to original (w, h) if resized *)
       resizable = false;
+      (* Override the default argument to set_font called for menu items *)
       x11_font_string = None;
+      (* The function to render the window contents. 
+         This can render in real-time, but a framebuffer approach with an image ref might have less flicker *)
       render_loop;
+      (* Function called when mouse clicked *)
       on_click = onclick;
+      (* Function called when key pressed *)
       on_key = onkey;
+      (* Default render window background color *)
       background = Solid 0xFF00DC;
-      text_spacing = None;
+      (* Whether to clear the screen after each rendered frame (will likely cause flicker) *)
+      clear_each_frame = true;
+      (* Adjust menu bar text spacing *)
+      text_spacing = Some {between_dropdowns_px = -1};
+      (* If true, clicks outside of the window boundaries will trigger on_click *)
+      trigger_outside_clicks = false;
+      (* OWM uses Core_unix to cap the framerate to save resources *)
       framerate_cap = 60;
+      (* Menu bar configuration *)
       menu_bar =
         {
+          (* Use the default background, selected background, and text colors *)
           bg_color = None;
           selected_bg_color = None;
           text_color = None;
+          (* Dropdown configuration *)
           dropdowns;
         };
     }

@@ -40,6 +40,8 @@ type window_config = {
   text_spacing : text_spacing_config option;
   framerate_cap : int;
   background : bgmode;
+  clear_each_frame : bool;
+  trigger_outside_clicks : bool;
   render_loop : int -> int -> unit;
   on_click : unit -> unit;
   on_key : char -> unit;
@@ -191,25 +193,7 @@ let owme_render_window config =
     match click_func with _, _, f -> f ()
   in
 
-  (* Draw menu bar and default background *)
-  let redraw_window () =
-    remember_mode true;
-    (* Draw menu bar *)
-    set_color mb_bg_color;
-    fill_rect 0 (canonical_sizey ()) (size_x ()) menu_bar_height;
-    (* Draw menu bar items *)
-    set_font font_string;
-    set_color mb_text_color;
-    let _ =
-      List.fold_left
-        (fun idx dropdown ->
-          let newx = dropdown_x_pos idx in
-          moveto newx (canonical_sizey ());
-          draw_string dropdown.dropdown_title;
-          idx + 1)
-        0 config.menu_bar.dropdowns
-    in
-    (* Window default bg *)
+  let clear_render_window () =
     let check_size = 17 in
     match config.background with
     | Solid bg ->
@@ -229,6 +213,28 @@ let owme_render_window config =
           done
         done;
         remember_mode false
+  in
+
+  (* Draw menu bar and default background *)
+  let redraw_window () =
+    remember_mode true;
+    (* Draw menu bar *)
+    set_color mb_bg_color;
+    fill_rect 0 (canonical_sizey ()) (size_x ()) menu_bar_height;
+    (* Draw menu bar items *)
+    set_font font_string;
+    set_color mb_text_color;
+    let _ =
+      List.fold_left
+        (fun idx dropdown ->
+          let newx = dropdown_x_pos idx in
+          moveto newx (canonical_sizey ());
+          draw_string dropdown.dropdown_title;
+          idx + 1)
+        0 config.menu_bar.dropdowns
+    in
+    (* Window default bg *)
+    clear_render_window ()
   in
 
   let frame_duration = 1. /. float_of_int config.framerate_cap in
@@ -286,8 +292,13 @@ let owme_render_window config =
                 | _ -> false
               in
               if do_click_mbitem then click_mbitem st.mouse_x st.mouse_y
-              else (* Click in render window *) config.on_click ()))
+              else if
+                (* Click in render window *)
+                xy_within_rect st.mouse_x st.mouse_y 0 0 (size_x ()) (size_y ())
+                || config.trigger_outside_clicks
+              then config.on_click ()))
         else mouse_is_down := false;
+        if config.clear_each_frame then clear_render_window ();
         config.render_loop (size_x ()) (canonical_sizey ())
       done
     with Exit -> ()

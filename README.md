@@ -28,7 +28,7 @@ let dropdowns =
   ]
 
 let _ =
-  render_window
+  owm_render_window
     {
       window_title = "OWM Hello World";
       window_width = 1280;

@@ -107,7 +107,7 @@ let onclick () =
     | _ -> 0xFF0000
 
 let onkey c =
-  if int_of_char c = key_ESCAPE then raise Exit
+  if c = key_ESCAPE then raise Exit
   else (
     print_char c;
     print_endline "")
@@ -125,7 +125,7 @@ let _ =
       resizable = false;
       (* Override the default argument to set_font called for menu items *)
       x11_font_string = None;
-      (* The function to render the window contents. 
+      (* The function to render the window contents.
          This can render in real-time, but a framebuffer approach with an image ref might have less flicker *)
       render_loop;
       (* Function called when mouse clicked *)
@@ -137,7 +137,7 @@ let _ =
       (* Whether to clear the screen after each rendered frame (will likely cause flicker) *)
       clear_each_frame = true;
       (* Adjust menu bar text spacing *)
-      text_spacing = Some {between_dropdowns_px = -1};
+      text_spacing = Some { between_dropdowns_px = -1 };
       (* If true, clicks outside of the window boundaries will trigger on_click *)
       trigger_outside_clicks = false;
       (* OWM uses Core_unix to cap the framerate to save resources *)

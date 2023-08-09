@@ -48,7 +48,7 @@ type window_config = {
   menu_bar : menu_bar_config;
 }
 
-let key_ESCAPE = 27
+let key_ESCAPE = char_of_int 27
 let last_wh = ref (0, 0)
 let mouse_is_down = ref false
 

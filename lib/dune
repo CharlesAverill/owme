@@ -1,3 +1,4 @@
 (library
  (name owme)
+ (public_name owme)
  (libraries graphics core_unix core_unix.core_thread))

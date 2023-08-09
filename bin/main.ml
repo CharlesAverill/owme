@@ -1,4 +1,5 @@
-open Owm
+open Owme
+open Graphics
 
 let dropdowns =
   [
@@ -68,18 +69,47 @@ let dropdowns =
     };
   ]
 
-let render_loop () = ()
+let spiral_color = ref 0xFF0000
+
+let render_loop max_x max_y =
+  set_line_width 3;
+  set_color !spiral_color;
+  let rec draw x y length angle =
+    if length < max_y / 3 then (
+      let new_x = int_of_float (float x +. (float length *. cos angle)) in
+      let new_y = int_of_float (float y +. (float length *. sin angle)) in
+      moveto x y;
+      lineto new_x new_y;
+      draw new_x new_y (length + 2) (angle -. 1.0))
+  in
+  draw (max_x / 2) (max_y / 2) 0 100.0
+
+let onclick () =
+  spiral_color :=
+    match !spiral_color with
+    | 0xFF0000 -> 0x00FF00
+    | 0x00FF00 -> 0x0000FF
+    | 0x0000FF -> 0xFF0000
+    | _ -> 0xFF0000
 
 let _ =
-  owm_render_window
+  owme_render_window
     {
-      window_title = "OWM Hello World";
+      window_title = "OWME Hello World";
       window_width = 1280;
       window_height = 720;
       resizable = false;
       x11_font_string = None;
       render_loop;
+      on_click = onclick;
       background = Solid 0xFF00DC;
       text_spacing = None;
-      menu_bar = { bg_color = None; text_color = None; dropdowns };
+      framerate_cap = 60;
+      menu_bar =
+        {
+          bg_color = None;
+          selected_bg_color = None;
+          text_color = None;
+          dropdowns;
+        };
     }

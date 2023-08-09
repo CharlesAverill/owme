@@ -27,14 +27,14 @@ testf: fmt
 	opam exec -- dune runtest -f
 
 run: build
-	opam exec -- dune exec -- owm
+	opam exec -- dune exec -- owme
 
 raw_run: build
 	clear
 	_build/default/bin/main.exe 
 
 debug: build
-	opam exec -- ocamldebug _build/default/owm/main.bc
+	opam exec -- ocamldebug _build/default/owme/main.bc
 
 push: cleandocs build
 	@read -p "Commit message: " input; \

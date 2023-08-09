@@ -1,4 +1,4 @@
 (executable
- (public_name owm)
+ (public_name owme)
  (name main)
- (libraries owm))
+ (libraries owme graphics))

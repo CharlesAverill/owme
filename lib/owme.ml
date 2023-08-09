@@ -16,6 +16,7 @@ type menu_bar_item = {
 
 type menu_bar_config = {
   bg_color : int option;
+  selected_bg_color : int option;
   text_color : int option;
   dropdowns : menu_bar_item list;
 }
@@ -24,6 +25,7 @@ let default_font_string =
   Printf.sprintf "-*-*-*-*-*-*-%d-*-*-*-*-*-*-*" fontsize
 
 let default_mb_bg_color = 0xE5E4E2
+let default_mb_bg_selected_color = 0xB5B4B2
 let default_mb_text_color = 0x000000
 
 type window_config = {
@@ -33,14 +35,17 @@ type window_config = {
   resizable : bool;
   x11_font_string : string option;
   text_spacing : text_spacing_config option;
+  framerate_cap : int;
   background : bgmode;
-  render_loop : unit -> unit;
+  render_loop : int -> int -> unit;
+  on_click : unit -> unit;
   menu_bar : menu_bar_config;
 }
 
 let last_wh = ref (0, 0)
+let mouse_is_down = ref false
 
-let owm_render_window config =
+let owme_render_window config =
   (* Set up window *)
   let height_with_menubar = config.window_height + menu_bar_height in
   open_graph (Printf.sprintf " %dx%d" config.window_width height_with_menubar);
@@ -51,6 +56,10 @@ let owm_render_window config =
     match config.menu_bar.bg_color with
     | Some x -> x
     | None -> default_mb_bg_color
+  and mb_selected_bg_color =
+    match config.menu_bar.selected_bg_color with
+    | Some x -> x
+    | None -> default_mb_bg_selected_color
   and mb_text_color =
     match config.menu_bar.text_color with
     | Some x -> x
@@ -71,30 +80,45 @@ let owm_render_window config =
   let char_px_width = fontsize / 2 in
   let string_px_width s = String.length s * char_px_width in
 
-  let dropdown_x_pos idx consumedpx =
+  let dropdown_x_pos idx =
+    let consumedpx =
+      fst
+        (List.fold_left
+           (fun (cpx, i) item ->
+             if i >= idx then (cpx, i)
+             else
+               ( (cpx
+                 + string_px_width item.dropdown_title
+                 + (2 * char_px_width)
+                 + if i <> 0 then text_between_dropdowns_px else 0),
+                 i + 1 ))
+           (0, 0) config.menu_bar.dropdowns)
+    in
     consumedpx
-    + if idx <> 0 then (2 * char_px_width) + text_between_dropdowns_px else 0
   in
 
   let is_click_within_mb _x y = y > canonical_sizey () in
 
   let mb_click_to_mbitem x _y =
-    match
-      List.fold_left
-        (fun (result, idx, consumedpx) item ->
-          if result = None then
-            if x > consumedpx && x < consumedpx + dropdown_x_pos idx consumedpx
-            then (Some item, idx, 0)
-            else
-              ( None,
-                idx + 1,
-                dropdown_x_pos idx consumedpx
-                + string_px_width item.dropdown_title )
-          else (result, idx, 0))
-        (None, 0, 0) config.menu_bar.dropdowns
-    with
-    | r, _, _ -> r
+    List.fold_left
+      (fun (result, idx) item ->
+        let max_x = dropdown_x_pos idx + string_px_width item.dropdown_title in
+        if result = None then
+          if x > dropdown_x_pos idx && x < max_x then (Some item, idx)
+          else (None, idx + 1)
+        else (result, idx))
+      (None, 0) config.menu_bar.dropdowns
   in
+
+  let highlight_mbitem idx =
+    set_color mb_selected_bg_color;
+    let item = List.nth config.menu_bar.dropdowns idx in
+    fill_rect (dropdown_x_pos idx)
+      (canonical_sizey () + 1)
+      (string_px_width item.dropdown_title)
+      menu_bar_height
+  in
+
   (* Draw menu bar and default background *)
   let redraw_window () =
     remember_mode true;
@@ -106,12 +130,12 @@ let owm_render_window config =
     set_color mb_text_color;
     let _ =
       List.fold_left
-        (fun (idx, consumedpx) dropdown ->
-          let newx = dropdown_x_pos idx consumedpx in
+        (fun idx dropdown ->
+          let newx = dropdown_x_pos idx in
           moveto newx (canonical_sizey ());
           draw_string dropdown.dropdown_title;
-          (idx + 1, newx + string_px_width dropdown.dropdown_title))
-        (0, 0) config.menu_bar.dropdowns
+          idx + 1)
+        0 config.menu_bar.dropdowns
     in
     (* Window default bg *)
     let check_size = 17 in
@@ -135,9 +159,12 @@ let owm_render_window config =
         remember_mode false
   in
 
+  let frame_duration = 1. /. float_of_int config.framerate_cap in
+
   let _ =
     set_color (rgb 0 0 0);
     remember_mode false;
+    let last_time = ref (Core_unix.gettimeofday ()) in
     try
       while true do
         (* Check for window resize *)
@@ -151,14 +178,35 @@ let owm_render_window config =
           redraw_window ());
         let st = wait_next_event [ Poll ] in
         synchronize ();
+
+        (* Calculate the time elapsed since the last frame *)
+        let current_time = Unix.gettimeofday () in
+        let elapsed_time = current_time -. !last_time in
+        last_time := current_time;
+
+        (* Calculate the time to sleep to achieve the desired frame rate *)
+        let sleep_time = frame_duration -. elapsed_time in
+        if sleep_time > 0. then Core_thread.delay sleep_time;
+
         if st.keypressed then raise Exit;
-        (if st.button then
-           if is_click_within_mb st.mouse_x st.mouse_y then
-             let menu_item_clicked = mb_click_to_mbitem st.mouse_x st.mouse_y in
-             match menu_item_clicked with
-             | None -> ()
-             | Some item -> print_endline item.dropdown_title);
-        config.render_loop ()
+        if st.button then (
+          if not !mouse_is_down then (
+            redraw_window ();
+            mouse_is_down := true;
+            (* Click on menu bar item *)
+            if is_click_within_mb st.mouse_x st.mouse_y then (
+              let menu_item_clicked, idx =
+                mb_click_to_mbitem st.mouse_x st.mouse_y
+              in
+              match menu_item_clicked with
+              | None -> ()
+              | Some item ->
+                  highlight_mbitem idx;
+                  Printf.printf "%d %s\n" idx item.dropdown_title;
+                  flush stdout (* Click in render window *))
+            else config.on_click ()))
+        else mouse_is_down := false;
+        config.render_loop (size_x ()) (canonical_sizey ())
       done
     with Exit -> ()
   in

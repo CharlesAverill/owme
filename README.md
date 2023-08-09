@@ -1,11 +1,11 @@
-# OWM
+# OWME
 
-A configurable OCaml Window Manager. 
+OWME (OWME is a Window Manager Emulator) is a configurable window manager (emulator) written in OCaml. 
 
 ## Quickstart
 
 ```ocaml
-open Owm
+open Owme
 
 let dropdowns =
   [
@@ -28,9 +28,9 @@ let dropdowns =
   ]
 
 let _ =
-  owm_render_window
+  owme_render_window
     {
-      window_title = "OWM Hello World";
+      window_title = "OWME Hello World";
       window_width = 1280;
       window_height = 720;
       resizable = false;
@@ -41,9 +41,9 @@ let _ =
 
 ## Caveats
 
-OWM is built on top of OCaml's [`Graphics`](https://github.com/ocaml/graphics) libary. This provides the pro of being as portable as `Graphics` is. However, it also provides the con of being as rigid as `Graphics` is. 
+OWME is built on top of OCaml's [`Graphics`](https://github.com/ocaml/graphics) libary. This provides the pro of being as portable as `Graphics` is. However, it also provides the con of being as rigid as `Graphics` is. 
 
-For example, font rendering is limited to the X11 fonts provided on a user's system. OWM will (by default) choose the first font available for the default OWM font size - this may or may not be an English font depending on a user's machine configuration. The `x11_font_string` field in the `window_config` type can be set to override this behavior (in the example above, it is empty, triggering the default). Even then, the default text spacing is <b>estimated</b>, so manual adjustment with the `text_spacing` struct may be required.
+For example, font rendering is limited to the X11 fonts provided on a user's system. OWME will (by default) choose the first font available for the default OWME font size - this may or may not be an English font depending on a user's machine configuration. The `x11_font_string` field in the `window_config` type can be set to override this behavior (in the example above, it is empty, triggering the default). Even then, the default text spacing is <b>estimated</b>, so manual adjustment with the `text_spacing` struct may be required.
 
 Additionally, rendering the actual window contents is left up to the user, so module-level acceleration is not possible. 
 

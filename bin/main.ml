@@ -1,3 +1,15 @@
+(*
+    OWME USAGE EXAMPLE
+
+    This file sets up a window that draws a spiral.
+
+    When the render window is clicked, the spiral changes colors.
+
+    The menu bar has four dropdowns: File, Edit, View, and Help.
+    Clicking on them opens their dropdowns. Their dropdown items 
+    execute arbitrary unit -> unit functions when clicked.
+*)
+
 open Owme
 open Graphics
 

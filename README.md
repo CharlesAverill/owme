@@ -2,42 +2,9 @@
 
 OWME (OWME is a Window Manager Emulator) is a configurable window manager (emulator) written in OCaml. 
 
-## Quickstart
+## Usage
 
-```ocaml
-open Owme
-
-let dropdowns =
-  [
-    {
-      dropdown_title = "File";
-      elements =
-        [
-          Button
-            {
-              button_name = "Subfile1";
-              onclick = (fun _ -> print_endline "Subfile1");
-            };
-          Button
-            {
-              button_name = "Subfile2";
-              onclick = (fun _ -> print_endline "Subfile2");
-            };
-        ];
-    };
-  ]
-
-let _ =
-  owme_render_window
-    {
-      window_title = "OWME Hello World";
-      window_width = 1280;
-      window_height = 720;
-      resizable = false;
-      x11_font_string = "";
-      menu_bar = { bg_color = _DEFAULT; text_color = _DEFAULT; dropdowns };
-    }
-```
+See [bin/main.ml](bin/main.ml) for a usage example.
 
 ## Caveats
 
@@ -51,7 +18,7 @@ Additionally, rendering the actual window contents is left up to the user, so mo
 
 I wrote this because I wanted a highly-reusable menuing system for my graphical OCaml projects, so it's not intended to be used for production software (you probably aren't writing production GUI software in OCaml anyways). Eventually I may add mouse events, such as context menus, but at the moment I just want:
 
-- [ ] Menu bar
-- [ ] Dropdowns
+- [x] Menu bar
+- [x] Dropdowns
 - [ ] Text boxes
-- [ ] Render window passed to user
+- [x] Render window passed to user
